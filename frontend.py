@@ -13,6 +13,9 @@ if "page" not in st.session_state:
 
 st.session_state.db_connection = None
 st.session_state.db_cursor = None
+# Initialise UI flags
+if "show_chat" not in st.session_state:
+    st.session_state.show_chat = False
 
 # ------------------------
 # Navigation Helpers
@@ -76,12 +79,29 @@ def dashboard_page(db_cursor):
 
     st.subheader("Submitted Profiles")
     user_email = st.session_state.user_email
-    print('email ---> ', user_email)
     q = f"SELECT person_name, person_age, person_email, processing_status FROM profiles WHERE user_email = '{user_email}'"
     db_cursor.execute(q)
     profiles = db_cursor.fetchall()
+    # Display each profile in an expandable container with a conditional button
     for profile in profiles:
-        st.write(profile)
+        # Use an expander to create a dialog‑like UI for each profile
+        with st.expander(
+            f"{profile.get('person_name', 'Unnamed')} ({profile.get('person_email', '')})"
+        ):
+            st.write("**Name:**", profile.get("person_name", "-"))
+            st.write("**Age:**", profile.get("person_age", "-"))
+            st.write("**Email:**", profile.get("person_email", "-"))
+            st.write("**Processing Status:**", profile.get("processing_status", "-"))
+            # Button is enabled only when processing_status is 'done'
+            is_done = profile.get("processing_status", "") == "done"
+            if st.button(
+                "View Profile",
+                key=f"view_{profile.get('person_email', '')}",
+                disabled=not is_done,
+            ):
+                # Store selected profile in session state and navigate
+                st.session_state.selected_profile = profile
+                go_to("view_profile")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -140,6 +160,67 @@ def create_profile_page():
 
 
 # ------------------------
+# View Profile Page
+# ------------------------
+def view_profile_page():
+    """Display a selected profile and provide a simple chat interface with the bot.
+
+    The profile is expected to be stored in ``st.session_state.selected_profile`` by the
+    dashboard page. The chat UI maintains a ``chat_history`` list in session state where
+    each entry is a tuple ``(role, message)`` with ``role`` being ``"user"`` or ``"bot"``.
+    For demonstration purposes the bot reply is a placeholder; replace the logic with a
+    call to your real chatbot implementation when available.
+    """
+    profile = st.session_state.get("selected_profile")
+    if not profile:
+        st.warning("No profile selected.")
+        if st.button("Back to Dashboard"):
+            go_to("dashboard")
+        return
+
+    st.title("👤 Profile Details")
+    st.subheader(f"{profile.get('person_name', '')} ({profile.get('person_email', '')})")
+    st.write("**Age:**", profile.get("person_age", "-"))
+    st.write("**Processing Status:**", profile.get("processing_status", "-"))
+
+    # Button to open chat with bot
+    if st.button("Chat with Bot"):
+        st.session_state.show_chat = True
+
+    # Show chat UI only when requested
+    if st.session_state.get("show_chat"):
+        st.markdown("---")
+        st.header("Chat with Bot")
+
+        # Initialise chat history if not present
+        if "chat_history" not in st.session_state:
+            st.session_state.chat_history = []
+
+        # Display existing messages
+        for role, msg in st.session_state.chat_history:
+            if role == "user":
+                st.chat_message("user").write(msg)
+            else:
+                st.chat_message("assistant").write(msg)
+
+        # Input box for new user message
+        user_input = st.chat_input("Type a message...")
+        if user_input:
+            st.session_state.chat_history.append(("user", user_input))
+            bot_reply = f"You said: {user_input}. (This is a placeholder response.)"
+            st.session_state.chat_history.append(("bot", bot_reply))
+            st.experimental_rerun()
+
+    # Navigation back button
+    if st.button("Back to Dashboard"):
+        # Clear selected profile, chat history and UI flag when leaving
+        st.session_state.pop("selected_profile", None)
+        st.session_state.pop("chat_history", None)
+        st.session_state.show_chat = False
+        go_to("dashboard")
+
+
+# ------------------------
 # App Router
 # ------------------------
 db_connection = psycopg2.connect(
@@ -159,3 +240,5 @@ else:
         dashboard_page(db_cursor)
     elif st.session_state.page == "create_profile":
         create_profile_page()
+    elif st.session_state.page == "view_profile":
+        view_profile_page()
