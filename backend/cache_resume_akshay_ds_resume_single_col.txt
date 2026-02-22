@@ -1,0 +1,29 @@
+### Experience
+
+#### **Senior Machine Learning Engineer**  
+**GGWV India** | March 2023 – Present  
+- Developed AI-powered moderation systems capable of processing text and voice data, ensuring compliance and content safety.  
+- Engineered web services using WebSockets, DynamoDB, and REST APIs to automate multi-tenant product management, reducing onboarding time by 95%.  
+- Designed and deployed production monitoring tools leveraging AWS CloudWatch alarms, Sentry, SNS, and Slack to maintain system uptime and streamline incident resolution.  
+- Maintained high-volume data pipelines using PySpark, Delta Lake, AWS EMR, SQS, Kinesis, and RDS to process billions of rows of data from clients like Pandora Wiki and Trello.  
+
+#### **Data Scientist**  
+**Mynd Solutions** | August 2021 – November 2022  
+- Built data-driven models for client analytics, optimizing workflows and improving decision-making processes.  
+- Utilized Python and SQL for data extraction, transformation, and analysis to support actionable business insights.  
+- Collaborated with cross-functional teams to integrate machine learning solutions into client-facing applications.  
+
+#### **AI Developer**  
+**Move78AI** | July 2019 – August 2021  
+- Developed and deployed AI solutions for client applications, focusing on natural language processing and data-driven workflows.  
+- Programmed in Python to create prototypes, automate processes, and enhance user engagement.  
+- Collaborated with stakeholders to define requirements and deliver end-to-end AI solutions.  
+
+#### **Additional Experience**  
+- **Open Source Contributor**: Actively contributed to the open-source project *n8n* (self-hosted), supporting community issues and feature development via GitHub.  
+- **Freelance Software Developer**: Worked as a software developer at Cognizant Technology, building web applications using Java, HTML, CSS, and JavaScript to meet internal client requirements.  
+
+---
+
+### Key Technical Skills  
+Python, SQL, AWS (Lambda, RDS, DynamoDB, CloudWatch, EMR, Kinesis), PySpark, Delta Lake, WebSockets, REST APIs, Jenkins, Git, Docker, HTML/CSS/JavaScript, Java, Selenium, Apache Kafka, SNS, Slack, Sentry, Trello, Pandas, NLP, Machine Learning, Data Pipelines, CI/CD, Version Control.

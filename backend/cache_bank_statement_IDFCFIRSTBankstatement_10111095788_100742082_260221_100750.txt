@@ -1,0 +1,55 @@
+### **1. Interest Earned from June 2023 to August 2023**  
+The account earned interest as follows:  
+- **June 2023**: ₹10,440.36  
+- **July 2023**: ₹11,273.50  
+- **August 2023**: ₹11,600.00  
+
+**Total Interest Earned**:  
+$$
+10,440.36 + 11,273.50 + 11,600.00 = \boxed{33,313.86}
+$$
+
+---
+
+### **2. Total Transaction Amount (June to August 2023)**  
+**Deposits**:  
+$$
+100,000 + 20,000 + 30,000 + 60,000 + 30,000 + 25,000 + 15,000 + 10,000 = \boxed{290,000}
+$$
+
+**Withdrawals**:  
+$$
+4,000 + 2,500 + 18,500 + 75,000 + 20,000 + 15,000 + 20,000 + 10,000 = \boxed{165,000}
+$$
+
+**Total Transaction Amount**:  
+$$
+290,000 + 165,000 = \boxed{455,000}
+$$
+
+---
+
+### **3. Total Amount of All Transactions in the Account**  
+This is the same as the total transaction amount calculated above:  
+$$
+\boxed{455,000}
+$$
+
+---
+
+### **4. Average Transaction Amount**  
+There are **16 transactions** (from S.No. 1 to 16 in the table).  
+
+$$
+\text{Average} = \frac{455,000}{16} = \boxed{28,437.50}
+$$
+
+---
+
+### **Summary**  
+| Question | Answer |
+|----------|--------|
+| Interest earned (June–August 2023) | ₹33,313.86 |
+| Total transaction amount (June–August 2023) | ₹455,000 |
+| Total amount of all transactions | ₹455,000 |
+| Average transaction amount | ₹28,437.50 |
