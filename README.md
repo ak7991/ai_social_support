@@ -1,14 +1,21 @@
-# ai_social_support
-An AI-powered system that can parse documents intelligently and provide actionable insights to citizens.
+# AI-powered Social Support Recommender
+An AI-powered system that can parse documents intelligently and can decide whether 
+the person is eligible for financial support or not.
+Users can upload documents like their:
+- resume
+- bank statements
+- emirates id card
+- credit report
+- assets/liabilities excel
+After assessment the users can also chat with a bot to know the reasons behind their 
+rejection. Additionally the chat-bot can also recommend other ways to for being more 
+financially successful catered to specific user profiles
 
-
-# Product Design
 
 ## User Journey
-A User can login using their username, password. They can upload a host of 
-documents on the dashboard. Before uploading any document, they need to 
-create a "profile" of the user they are uploading for, i.e. they need to tell 
-name, age, gender, etc of the person they are uploading these documents for. 
+A User can login using their username, password (or they can signup using a new email).
+They can upload a host of documents on the dashboard. Before uploading any document, 
+they need to create a "profile" of the user they are uploading for, i.e. they need to tell name, age, gender, etc of the person they are uploading these documents for. 
 While uploading the documents the user must also tell which document is what, so 
 they should first select a document from the dropdown and then attach the relevant 
 file.  
@@ -21,6 +28,7 @@ instantly, and the validations should be basic validation, for eg:
 
 For now the form and its fields will be in English, but soon we should support 
 Arabic as the primary language.
+[user_journey](./ai_social_support_user_journey.png)
 
 ## Admin Journey
 An Admin can login using their username, password. They can see profiles of users 
