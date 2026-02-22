@@ -122,3 +122,22 @@ def get_profile_data(profile_id: str):
     cursor.close()
     conn.close()
     return result
+
+def save_profile_decision(profile_id: str, decision: str, reason: str) -> bool:
+    """Mock function to save a recommendation decision for a profile.
+    This is a placeholder that would normally persist the decision to Postgres.
+    """
+    db_conn = get_connection()
+    cursor = db_conn.cursor()
+    sql = f"""
+    UPDATE profiles SET 
+        processing_status = 'done'
+        decision = %s
+        reason = %s
+    WHERE id = %s
+    """
+    cursor.execute(sql, (decision, reason, profile_id))
+    db_conn.commit()
+    cursor.close()
+    db_conn.close()
+    return True

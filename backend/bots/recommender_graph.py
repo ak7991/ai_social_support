@@ -1,16 +1,19 @@
 import os
 from time import time
-from typing import Any, Dict, TypedDict
+import operator
+from typing import Any, Dict, TypedDict, List, Annotated
 import psycopg2
 import hashlib
+import requests
 from psycopg2.extras import RealDictCursor
 
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 from langgraph.graph import StateGraph, END, START
 import ollama
 
 OLLAMA_HOST = "http://localhost:11434"
-MODEL_NAME = "qwen3-vl:8b"
-# MODEL_NAME = "qwen3-vl:235b-cloud"
+# MODEL_NAME = "qwen3-vl:8b"
+MODEL_NAME = "qwen3-vl:235b-cloud"
 
 client = ollama.Client(host=OLLAMA_HOST)
 
@@ -22,6 +25,15 @@ DB_CONFIG = {
     "password": "postgres"
 }
 
+class AgentState(TypedDict, total=False):
+    profile_id: str
+    db_cursor: Any
+    profile_data: str
+    extractions: str
+    rules: str
+    decision: str
+    verification: str
+    messages: Annotated[List[BaseMessage], operator.add]
 
 def _load_cache(filetype: str, path: str) -> str | None:
     """Return cached content if it exists.
@@ -38,7 +50,6 @@ def _load_cache(filetype: str, path: str) -> str | None:
         except Exception:
             return None
     return None
-
 
 def _save_cache(filetype: str, path: str, content: str) -> None:
     """Save ``content`` to the cache file for the given ``filetype`` and ``path``."""
@@ -58,73 +69,34 @@ def get_db_connection(state: Dict[str, Any]) -> Dict[str, Any]:
     cursor = db_connection.cursor(cursor_factory=RealDictCursor)
     new_state = dict(state)
     new_state["db_cursor"] = cursor
-    return new_state
+    return {"db_cursor": cursor}
 
 def debug_state(state: Dict[str, Any]) -> Dict[str, Any]:
     """Debug helper that logs the current state without mutating it.
     Returning the original ``state`` ensures that keys such as ``profile_id`` are not lost.
     """
     print("[DEBUG] Current state:", state)
-    # No breakpoint in production; keep the state unchanged.
     return state
-
 
 # Gets profile data for the user, like name, age, gender, etc.
 def query_profile_data(state: Dict[str, Any]) -> Dict[str, Any]:
     """Fetch profile information for the given ``profile_id`` and merge it into state.
     """
     profile_id = state.get("profile_id")
-    sql = f"""
-        SELECT person_name, person_age
-        FROM profiles
-        WHERE id = '{profile_id}';
-    """
-    print("Executing SQL for profile data:", sql)
-    cursor = state.get("db_cursor")
-    cursor.execute(sql)
-    profile_data = cursor.fetchone()
-    new_state = dict(state)
-    new_state["profile"] = profile_data
-    return new_state
+    response = requests.get(f"http://localhost:8000/profile/{profile_id}")
+    print("Received response from /profile endpoint:", response.status_code, response.text)
+    return {"profile_data": response.json()["message"]}
 
 # Gets extracted data from profile's documents.
 def query_profile_extractions(state: Dict[str, Any]) -> Dict[str, Any]:
     """Fetch extracted data from profile's documents and merge into state.
     """
-    profile_id = state.get("profile_id", "unknown")
-    sql = f"""
-    SELECT 
-        extracted_data, doc_type
-    FROM profile_extractions
-    WHERE profile_id = '{profile_id}';
-    """
-    print("Executing SQL for user data:", sql)
-    cursor = state.get("db_cursor")
-    cursor.execute(sql)
-    profile_data = cursor.fetchall()
-    bank_stmt_data, resume_data, id_card_data = "", "", ""
-    for data, doc_type in profile_data:
-        if doc_type == "bank_statement":
-            bank_stmt_data = data
-        elif doc_type == "resume":
-            resume_data = data
-        elif doc_type == "id_card":
-            id_card_data = data
-    formatted_data = f"""
-BANK STATEMENT:
-{bank_stmt_data}
-------------------------
-RESUME:
-{resume_data}
-------------------------
-ID CARD:
-{id_card_data}
-    """
-    new_state = dict(state)
-    new_state["extractions"] = formatted_data
-    return new_state
+    profile_id = state.get("profile_id")
+    response = requests.get(f"http://localhost:8000/extractions/{profile_id}")
+    print("Received response from /extractions endpoint:", response.status_code, response.text)
+    return {"extractions": response.json()["message"]}
 
-
+# hard coded rules
 def get_recommendation_rules() -> str:
     """Simple node that returns the recommendation rules in plain text."""
     rules = (
@@ -135,7 +107,7 @@ def get_recommendation_rules() -> str:
     )
     return rules
 
-
+# llm inference wrapper
 def call_ollama(prompt: str) -> str:
     """Utility to call the Ollama model.
     The model runs at http://localhost:11434 and the model name is `qwen3-vl:8b`.
@@ -149,7 +121,7 @@ def call_ollama(prompt: str) -> str:
         return cached
 
     t1 = time()
-    response = client.chat(
+    response = ollama.chat(
         model=MODEL_NAME,
         messages=[
             {"role": "system", "content": "You are an unbiased decision maker."},
@@ -160,26 +132,28 @@ def call_ollama(prompt: str) -> str:
     _save_cache("recommender", cache_key, response["message"]["content"])
     return response["message"]["content"]
 
-
+# main decision node
 def decision_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """LLM node that decides if a user is recommended for financial support.
     Returns a merged state containing the decision.
     """
     prompt = (
         "You are a financial support recommender. Based on the following information, decide if the user should be recommended for support.\n\n"
-        f"Profile: {state.get('profile')}\n"
-        f"Extractions: {state.get('extractions')}\n"
+        f"{state.get('profile_data')}\n"
+        f"{state.get('extractions')}\n"
         f"Rules: {state.get('rules')}\n\n"
-        "Answer with 'YES' or 'NO' and a short justification."
+        "First answer with 'YES' or 'NO' and then a short justification."
     )
     print("[DEBUG] Entering decision_node")
     decision = call_ollama(prompt)
     print("[DEBUG] Decision result:", decision)
-    new_state = dict(state)
-    new_state["decision"] = decision
-    return new_state
+    state_update = {
+        "messages": [HumanMessage(content=prompt), AIMessage(content=decision)], 
+        "decision": decision
+    }
+    return state_update
 
-
+# verifier node; can add conditional edge back to decision (later)
 def verification_node(state: Dict[str, Any]) -> Dict[str, Any]:
     """LLM node that verifies the decision and merges the verification result.
     """
@@ -191,19 +165,11 @@ def verification_node(state: Dict[str, Any]) -> Dict[str, Any]:
     print("[DEBUG] Entering verification_node")
     verification = call_ollama(prompt)
     print("[DEBUG] Verification result:", verification)
-    new_state = dict(state)
-    new_state["verification"] = verification
-    return new_state
-
-# Define a TypedDict for the agent state to provide static typing.
-class AgentState(TypedDict, total=False):
-    profile_id: str
-    db_cursor: Any
-    profile: Dict[str, Any]
-    extractions: str
-    rules: str
-    decision: str
-    verification: str
+    state_update = {
+        "messages": [HumanMessage(content=prompt), AIMessage(content=verification)],
+        "verification": verification
+    }
+    return state_update
 
 # Define the graph using the AgentState type
 workflow = StateGraph(AgentState)
@@ -225,8 +191,8 @@ workflow.add_edge("debug_state", "sql_profile_data")
 workflow.add_edge("sql_profile_data", "sql_extractions")
 workflow.add_edge("sql_extractions", "rules")
 workflow.add_edge("rules", "decision")
-workflow.add_edge("decision", "verification")
-workflow.add_edge("verification", END)
+# workflow.add_edge("decision", "verification")
+workflow.add_edge("decision", END)
 
 # Compile the graph
 app = workflow.compile()
@@ -234,6 +200,7 @@ app = workflow.compile()
 # Example entry point (for testing)
 if __name__ == "__main__":
     profile_id = os.getenv("PROFILE_ID", "bd7dbd2f-849d-4eb1-95ba-1c2fce920760")
+    init_state = AgentState(profile_id=profile_id, messages=[SystemMessage(content="Starting financial support recommendation process.")])
     # Initial empty state; nodes will populate it
-    result = app.invoke({"profile_id": profile_id})
+    result = app.invoke(init_state)
     print("Final result:", result)
