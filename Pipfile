@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+streamlit = "*"
+psycopg2 = "*"
+watchdog = "*"
+fastapi = "*"
+uvicorn = "*"
+ollama = "*"
+pymupdf = "*"
+fitz = "*"
+langgraph = "*"
+
+[dev-packages]
+autopep8 = "*"
+
+[scripts]
+
+[requires]
+python_version = "3.11"
