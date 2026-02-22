@@ -13,6 +13,7 @@ ollama = "*"
 pymupdf = "*"
 fitz = "*"
 langgraph = "*"
+langchain = "*"
 
 [dev-packages]
 autopep8 = "*"
