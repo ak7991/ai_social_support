@@ -27,18 +27,32 @@ Arabic as the primary language.
 ![user_journey](./ai_social_support_user_journey.png)
 
 
+# Frontend
+The user‑facing application is built with **Streamlit**, providing a simple web UI.
+
+Key pages:
+
+* **Login / Sign‑up** – authentication for users.
+* **Home** – dashboard showing existing profiles and quick actions.
+* **Create Profile** – form to capture personal details (name, age, gender, …) before document upload.
+* **View Profile** – displays extracted information, recommendation outcome, and a chat interface.
+* **Chat Bot** – powered by a LangGraph workflow, users can ask why a decision was made and get personalized advice.
+
+All pages share a consistent look and are responsive for desktop and mobile browsers.
+
 # Tech Spec
-For the UI, we have portal with a couple of pages like:
-- login/signup page  
-- "home" page  
-- create profile page  
-The dashboard is build using Streamlit.
+For the UI, we have a Streamlit portal with several pages:
+- **Login / Sign‑up page** – users authenticate or create an account.
+- **Home page** – overview of uploaded profiles and quick actions.
+- **View profile page** – display extracted information and recommendation for a selected profile.
+- **Create profile page** – collect personal details (name, age, gender, etc.) before uploading documents.
+The dashboard is built using **Streamlit**.
 For the document processing backend, we have API's built on the FastAPI webserver.  
-The actual extractions are done via multi-modal models hosted locally using Ollama.  
-The results of the extractions are then stored in an RDBMS (postgres).  
-We have a recommender which can take all the extractions as input and provide a  
-recommendation whether the profile is eligible to get financial support or not.  
-Finally there's another bot which the users can chat with regarding the decision.
+The document‑processing backend provides FastAPI endpoints.
+Extraction is performed by **custom LangGraph workflows** that orchestrate multi‑modal models hosted locally via Ollama.
+Extracted data is persisted in a PostgreSQL database.
+A recommender workflow consumes all extractions to decide if a profile is eligible for financial support.
+Another **LangGraph‑based chatbot** lets users ask about the decision and receive personalized advice.
 
 # Future Roadmap 
 Main aim should be to reduce production costs, while increasing accuracy.
