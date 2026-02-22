@@ -131,8 +131,8 @@ def save_profile_decision(profile_id: str, decision: str, reason: str) -> bool:
     cursor = db_conn.cursor()
     sql = f"""
     UPDATE profiles SET 
-        processing_status = 'done'
-        decision = %s
+        processing_status = 'done',
+        decision = %s,
         reason = %s
     WHERE id = %s
     """

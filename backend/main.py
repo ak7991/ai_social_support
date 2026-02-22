@@ -8,6 +8,17 @@ from db import (
 )
 from utils import resume_parser, id_card_parser, bank_statement_parser
 from bots import recommender_graph
+from bots.chatbot import (
+    _thread_states,
+    graph,
+    SystemMessage,
+    HumanMessage,
+    ChatRequest,
+    ChatResponse,
+    PROMPT,
+)
+from langchain_core.prompts import PromptTemplate
+import requests
 
 app = FastAPI()
 
@@ -15,6 +26,12 @@ app = FastAPI()
 @app.get("/")
 def root():
     return {"status": "ok", "message": "FastAPI server running"}
+
+
+@app.get("/v1/health")
+def health():
+    """Simple health check endpoint for the chatbot service."""
+    return {"status": "ok", "message": "Chatbot server running"}
 
 @app.post("/process")
 def process_profiles():
@@ -125,4 +142,40 @@ def recommend_profile(profile_id: str):
     decision = "YES" if "YES" in raw_result[:5].upper() else "NO"
     save_profile_decision(profile_id, decision, raw_result)
     return {"profile_id": profile_id, "decision": decision, "state": result}
+
+
+@app.post("/chat/{profile_id}", response_model=ChatResponse)
+async def chat_endpoint(profile_id: str, payload: ChatRequest):
+    """Receive a user message and return the assistant's reply.
+
+    * ``payload.message`` – the new user message.
+    * ``profile_id`` – identifier for the conversation (e.g., a UUID or user ID).
+    """
+    if not payload.message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    # Retrieve or initialise thread state.
+    if profile_id in _thread_states:
+        messages = _thread_states[profile_id]
+    else:
+        # Fetch extraction context from the existing extraction endpoint.
+        try:
+            extraction_resp = requests.get(f"http://localhost:8000/extractions/{profile_id}")
+            extraction_resp.raise_for_status()
+            data = extraction_resp.json()
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=f"Failed to fetch extraction data: {exc}")
+
+        placeholder_map = {"EXTRACTIONS": data.get("message", "")}
+        prompt_template = PromptTemplate.from_template(PROMPT)
+        filled_prompt = prompt_template.format(**placeholder_map)
+        messages = [SystemMessage(content=filled_prompt)]
+        _thread_states[profile_id] = messages
+
+    # Append user message and invoke workflow.
+    messages.append(HumanMessage(content=payload.message))
+    result = await graph.ainvoke({"messages": messages})
+    # Update stored state with assistant reply.
+    _thread_states[profile_id] = result["messages"]
+    return ChatResponse(reply=result["assistant_reply"], thread_id=profile_id)
 
