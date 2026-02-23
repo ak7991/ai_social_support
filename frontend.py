@@ -2,7 +2,7 @@ import streamlit as st
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from utils import save_uploaded_file
-
+import requests
 
 st.session_state.user_email = None
 if "logged_in" not in st.session_state:
@@ -79,7 +79,7 @@ def dashboard_page(db_cursor):
 
     st.subheader("Submitted Profiles")
     user_email = st.session_state.user_email
-    q = f"SELECT person_name, person_age, person_email, processing_status FROM profiles WHERE user_email = '{user_email}'"
+    q = f"SELECT person_name, person_age, person_email, processing_status, decision FROM profiles WHERE user_email = '{user_email}'"
     db_cursor.execute(q)
     profiles = db_cursor.fetchall()
     # Display each profile in an expandable container with a conditional button
@@ -174,6 +174,7 @@ def view_profile_page():
     st.subheader(f"{profile.get('person_name', '')} ({profile.get('person_email', '')})")
     st.write("**Age:**", profile.get("person_age", "-"))
     st.write("**Processing Status:**", profile.get("processing_status", "-"))
+    st.write("**Recommendation:**", profile.get("decision", "-"))
 
     # Button to open chat with bot
     if st.button("Chat with Bot"):
@@ -199,9 +200,10 @@ def view_profile_page():
         user_input = st.chat_input("Type a message...")
         if user_input:
             st.session_state.chat_history.append(("user", user_input))
-            bot_reply = f"You said: {user_input}. (This is a placeholder response.)"
+            response = requests.post(f"http://localhost:8000/chat/bd7dbd2f-849d-4eb1-95ba-1c2fce920760", json={"message": user_input})
+            bot_reply = response.json().get("reply", "Sorry, no response from bot.")
             st.session_state.chat_history.append(("bot", bot_reply))
-            st.experimental_rerun()
+            st.rerun()
 
     # Navigation back button
     if st.button("Back to Dashboard"):

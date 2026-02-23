@@ -16,6 +16,7 @@ from bots.chatbot import (
     ChatRequest,
     ChatResponse,
     PROMPT,
+    AgentState
 )
 from langchain_core.prompts import PromptTemplate
 import requests
@@ -33,9 +34,6 @@ def health():
     """Simple health check endpoint for the chatbot service."""
     return {"status": "ok", "message": "Chatbot server running"}
 
-@app.post("/process")
-def process_profiles():
-    return {"status": "ok", "message": "FastAPI server running"}
 
 @app.post("/process/{profile_id}")
 def process_profile(profile_id: str):
@@ -160,12 +158,10 @@ async def chat_endpoint(profile_id: str, payload: ChatRequest):
     else:
         # Fetch extraction context from the existing extraction endpoint.
         try:
-            extraction_resp = requests.get(f"http://localhost:8000/extractions/{profile_id}")
-            extraction_resp.raise_for_status()
-            data = extraction_resp.json()
+            data = get_extractions(profile_id)
         except Exception as exc:
             raise HTTPException(status_code=502, detail=f"Failed to fetch extraction data: {exc}")
-
+        print('Fetched extractions: ', data)
         placeholder_map = {"EXTRACTIONS": data.get("message", "")}
         prompt_template = PromptTemplate.from_template(PROMPT)
         filled_prompt = prompt_template.format(**placeholder_map)
@@ -174,8 +170,9 @@ async def chat_endpoint(profile_id: str, payload: ChatRequest):
 
     # Append user message and invoke workflow.
     messages.append(HumanMessage(content=payload.message))
-    result = await graph.ainvoke({"messages": messages})
+    print('invoking chatbot with messages: ', messages)
+    result = await graph.ainvoke(AgentState(messages=messages))
     # Update stored state with assistant reply.
     _thread_states[profile_id] = result["messages"]
-    return ChatResponse(reply=result["assistant_reply"], thread_id=profile_id)
+    return ChatResponse(reply=result["messages"][-1].content, thread_id=profile_id)
 

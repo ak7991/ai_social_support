@@ -63,15 +63,30 @@ def llm_node(state: Dict[str, Any]):
     objects compatible with Ollama's API.
     """
     try:
-        response = ollama.chat(model=_MODEL_NAME, messages=state.get("messages", []))
+        # Convert LangChain/BaseMessage objects into Ollama's expected message format
+        messages_payload = []
+        for m in state.messages:
+            if isinstance(m, HumanMessage):
+                role = "user"
+            elif isinstance(m, AIMessage):
+                role = "assistant"
+            elif isinstance(m, SystemMessage):
+                role = "system"
+            else:
+                role = getattr(m, "role", getattr(m, "type", "user"))
+            content = getattr(m, "content", str(m))
+            messages_payload.append({"role": role, "content": content})
+
+        response = ollama.chat(model=_MODEL_NAME, messages=messages_payload)
     except Exception as exc:
         raise RuntimeError(f"Ollama request failed: {exc}")
+
     # Ollama returns a dict with a ``message`` key containing ``content``.
     assistant_msg = response.get("message", {}).get("content", "")
-    # Append the assistant reply to the message list.
-    messages = list(state.get("messages", []))
-    messages.append(AIMessage(assistant_msg))
-    return {"messages": messages, "assistant_reply": assistant_msg}
+
+    # Append the assistant reply back into the workflow state as an AIMessage
+    assistant_obj = AIMessage(content=assistant_msg)
+    return {"messages": state.messages + [assistant_obj]}
 
 # Define the graph – a single node that ends the workflow.
 # Define a custom state class for the LangGraph workflow.
