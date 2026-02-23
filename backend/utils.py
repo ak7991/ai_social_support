@@ -114,7 +114,6 @@ Return the following information:
         return cached
     id_card_path = PATH_PREFIX + id_card_path
     print('starting id_card parsing: ', id_card_path)
-    breakpoint()
     # pages = convert_pdf_to_images(id_card_path)
     # image_paths = [f"images/page_{i+1}.png" for i in range(pages)]
     response = ollama.chat(
@@ -179,6 +178,5 @@ Extract the following information along with some description/brief:
 if __name__ == "__main__":
     # result = resume_parser("../uploaded_files/akshay_ds_resume_single_col.pdf")
     # print("result: ", result)
-    # breakpoint()
     result = bank_statement_parser("../uploaded_files/IDFCFIRSTBankstatement_10111095788_100742082_260221_100750.pdf")
     print("result: ", result)
