@@ -163,14 +163,6 @@ def create_profile_page():
 # View Profile Page
 # ------------------------
 def view_profile_page():
-    """Display a selected profile and provide a simple chat interface with the bot.
-
-    The profile is expected to be stored in ``st.session_state.selected_profile`` by the
-    dashboard page. The chat UI maintains a ``chat_history`` list in session state where
-    each entry is a tuple ``(role, message)`` with ``role`` being ``"user"`` or ``"bot"``.
-    For demonstration purposes the bot reply is a placeholder; replace the logic with a
-    call to your real chatbot implementation when available.
-    """
     profile = st.session_state.get("selected_profile")
     if not profile:
         st.warning("No profile selected.")
