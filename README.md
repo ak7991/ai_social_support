@@ -46,13 +46,19 @@ For the UI, we have a Streamlit portal with several pages:
 - **Home page** – overview of uploaded profiles and quick actions.
 - **View profile page** – display extracted information and recommendation for a selected profile.
 - **Create profile page** – collect personal details (name, age, gender, etc.) before uploading documents.
-The dashboard is built using **Streamlit**.
+
+The dashboard is built using **Streamlit**.  
 For the document processing backend, we have API's built on the FastAPI webserver.  
-The document‑processing backend provides FastAPI endpoints.
-Extraction is performed by **custom LangGraph workflows** that orchestrate multi‑modal models hosted locally via Ollama.
-Extracted data is persisted in a PostgreSQL database.
-A recommender workflow consumes all extractions to decide if a profile is eligible for financial support.
+The document‑processing backend provides FastAPI endpoints.  
+Extraction is performed by **custom LangGraph workflows** that orchestrate multi‑modal models hosted locally via Ollama.  
+Extracted data is persisted in a PostgreSQL database.  
+A recommender workflow consumes all extractions to decide if a profile is eligible for financial support.  
 Another **LangGraph‑based chatbot** lets users ask about the decision and receive personalized advice.
+![agent_flow](./recommender_graph.png)
+
+There's also a chatbot that users can interact with to ask questions about their profile  
+submission.
+![chatbot](./chatbot.png)
 
 # Future Roadmap 
 Main aim should be to reduce production costs, while increasing accuracy.
